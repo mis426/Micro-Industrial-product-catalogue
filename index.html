@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Catalogue</title>
+    <!-- PapaParse for smooth CSV fetching -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: #f0f2f5; color: #1c1e21; padding: 20px; }
+        
+        header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            background: #ffffff; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+        }
+        header h1 { font-size: 26px; color: #1a73e8; font-weight: 700; }
+        header p { color: #5f6368; font-size: 14px; margin-top: 5px; }
+
+        /* Filter Controls */
+        .filter-panel { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 12px; 
+            background: #ffffff; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+            margin-bottom: 25px; 
+            align-items: end;
+        }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 12px; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; color: #4b5563; }
+        .filter-group input, .filter-group select { 
+            padding: 10px 12px; 
+            border: 1px solid #d1d5db; 
+            border-radius: 8px; 
+            outline: none; 
+            font-size: 14px; 
+            background-color: #f9fafb;
+        }
+        .filter-group input:focus, .filter-group select:focus { border-color: #1a73e8; background-color: #fff; }
+        
+        .reset-btn { 
+            padding: 10px 16px; 
+            background: #ef4444; 
+            color: #ffffff; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            height: 41px;
+        }
+        .reset-btn:hover { background: #dc2626; }
+
+        /* Product Cards Grid */
+        .product-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 20px; 
+        }
+        .product-card { 
+            background: #ffffff; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
+            display: flex; 
+            flex-direction: column; 
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        .img-box { 
+            width: 100%; 
+            height: 200px; 
+            background: #f3f4f6; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden; 
+        }
+        .img-box img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+        
+        .card-content { padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .category-badge { 
+            display: inline-block; 
+            background: #e0e7ff; 
+            color: #3730a3; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            margin-bottom: 8px; 
+            width: fit-content;
+            text-transform: uppercase;
+        }
+        .article-name { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 2px; }
+        .subcategory-name { font-size: 13px; color: #6b7280; font-weight: 500; margin-bottom: 12px; }
+        
+        .details-list { border-top: 1px dashed #e5e7eb; padding-top: 10px; margin-bottom: 12px; }
+        .details-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #4b5563; }
+        .details-item span { font-weight: 600; color: #1f2937; text-align: right; max-width: 60%; }
+        
+        .price-box { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #f9fafb; 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin-top: auto; 
+        }
+        .mrp { font-size: 15px; font-weight: 800; color: #059669; }
+
+        #loading { text-align: center; font-size: 18px; color: #4b5563; padding: 40px; font-weight: 600; }
+        #no-results { display: none; grid-column: 1 / -1; text-align: center; color: #9ca3af; padding: 40px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Product Catalogue</h1>
+        <p>Live Product Inventory & Stock Directory</p>
+    </header>
+
+    <!-- Filter Buttons -->
+    <div class="filter-panel">
+        <div class="filter-group">
+            <label>Search Article No</label>
+            <input type="text" id="searchInput" placeholder="Search article no..." oninput="filterData()">
+        </div>
+        <div class="filter-group">
+            <label>Category</label>
+            <select id="catFilter" onchange="filterData()">
+                <option value="">All Categories</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Sub Category</label>
+            <select id="subCatFilter" onchange="filterData()">
+                <option value="">All Sub Categories</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Color</label>
+            <select id="colorFilter" onchange="filterData()">
+                <option value="">All Colors</option>
+            </select>
+        </div>
+        <button class="reset-btn" onclick="resetAllFilters()">Reset Filters</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading">Loading Data from Google Sheet...</div>
+    
+    <!-- Grid -->
+    <div class="product-grid" id="productGrid">
+        <div id="no-results">No matching products found.</div>
+    </div>
+
+    <script>
+        // Google Sheet URL targeting 'Article_Summary' tab (gid=1143338782)
+        const SPREADSHEET_ID = '1EaKQStZdEwJ6IhGvU3qzCwWv5o-WP8MygpQk6sEblHA';
+        const GID = '1143338782'; // Article_Summary Tab ID
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+
+        let rawProducts = [];
+
+        function fetchSheetData() {
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    rawProducts = results.data;
+                    document.getElementById('loading').style.display = 'none';
+                    buildFilterDropdowns(rawProducts);
+                    renderCards(rawProducts);
+                },
+                error: function(err) {
+                    console.error("Error loading CSV:", err);
+                    document.getElementById('loading').innerHTML = 
+                        `<span style="color:red">Failed to load data!</span><br><small>Please check Google Sheet access (Set to 'Anyone with the link').</small>`;
+                }
+            });
+        }
+
+        function buildFilterDropdowns(data) {
+            const categories = new Set();
+            const subCategories = new Set();
+            const colors = new Set();
+
+            data.forEach(p => {
+                if (p['Category']) categories.add(p['Category'].trim());
+                if (p['Sub Category']) subCategories.add(p['Sub Category'].trim());
+                if (p['Color']) colors.add(p['Color'].trim());
+            });
+
+            populateSelect('catFilter', categories);
+            populateSelect('subCatFilter', subCategories);
+            populateSelect('colorFilter', colors);
+        }
+
+        function populateSelect(elemId, setList) {
+            const sel = document.getElementById(elemId);
+            setList.forEach(val => {
+                if(val) {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    sel.appendChild(opt);
+                }
+            });
+        }
+
+        function renderCards(items) {
+            const grid = document.getElementById('productGrid');
+            const noRes = document.getElementById('no-results');
+            
+            grid.innerHTML = '';
+            grid.appendChild(noRes);
+
+            if (items.length === 0) {
+                noRes.style.display = 'block';
+                return;
+            } else {
+                noRes.style.display = 'none';
+            }
+
+            items.forEach(p => {
+                const category = p['Category'] || 'N/A';
+                const subCategory = p['Sub Category'] || '-';
+                const articleNo = p['Article No'] || 'N/A';
+                const color = p['Color'] || '-';
+                const size = p['Size'] || '-';
+                const totalPairs = p['Total Pairs'] || '0';
+                const totalCNS = p['Total CNS'] || '0';
+                
+                // Image column check
+                let img = p['Image'] || 'https://via.placeholder.com/300x200?text=No+Image';
+                if(img.trim().toLowerCase() === 'not found' || !img.startsWith('http')) {
+                    img = 'https://via.placeholder.com/300x200?text=No+Image';
+                }
+
+                const cardHTML = `
+                    <div class="product-card">
+                        <div class="img-box">
+                            <img src="${img}" alt="${articleNo}" onerror="this.src='https://via.placeholder.com/300x200?text=Image+Not+Found'">
+                        </div>
+                        <div class="card-content">
+                            <div>
+                                <span class="category-badge">${category}</span>
+                                <div class="article-name">Article: ${articleNo}</div>
+                                <div class="subcategory-name">Sub Cat: ${subCategory}</div>
+                                
+                                <div class="details-list">
+                                    <div class="details-item">Color: <span>${color}</span></div>
+                                    <div class="details-item">Size Info: <span>${size}</span></div>
+                                </div>
+                            </div>
+                            <div class="price-box">
+                                <span class="mrp">Pairs: ${totalPairs}</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #4b5563;">CNS: ${totalCNS}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.innerHTML += cardHTML;
+            });
+        }
+
+        function filterData() {
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const catVal = document.getElementById('catFilter').value.toLowerCase();
+            const subCatVal = document.getElementById('subCatFilter').value.toLowerCase();
+            const colorVal = document.getElementById('colorFilter').value.toLowerCase();
+
+            const filtered = rawProducts.filter(p => {
+                const articleMatch = !searchVal || (p['Article No'] && p['Article No'].toLowerCase().includes(searchVal));
+                const catMatch = !catVal || (p['Category'] && p['Category'].toLowerCase() === catVal);
+                const subCatMatch = !subCatVal || (p['Sub Category'] && p['Sub Category'].toLowerCase() === subCatVal);
+                const colorMatch = !colorVal || (p['Color'] && p['Color'].toLowerCase() === colorVal);
+
+                return articleMatch && catMatch && subCatMatch && colorMatch;
+            });
+
+            renderCards(filtered);
+        }
+
+        function resetAllFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('catFilter').value = '';
+            document.getElementById('subCatFilter').value = '';
+            document.getElementById('colorFilter').value = '';
+            renderCards(rawProducts);
+        }
+
+        // Start Loading Data
+        fetchSheetData();
+    </script>
+</body>
+</html>
