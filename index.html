@@ -7,17 +7,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-        body { background-color: #f0f2f5; color: #1c1e21; padding: 20px; }
         
+        /* Layout Fixes for Fixed Header and Footer */
+        body { 
+            background-color: #f0f2f5; 
+            color: #1c1e21; 
+            padding: 0; 
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Freeze Header at Top */
         header { 
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 25px; 
             background: #ffffff; 
-            padding: 15px 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+            padding: 12px 25px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
             flex-wrap: wrap;
             gap: 15px;
         }
@@ -27,11 +39,11 @@
             gap: 15px;
         }
         .company-logo {
-            height: 50px;
+            height: 45px;
             width: auto;
             object-fit: contain;
         }
-        .brand-text h1 { font-size: 22px; color: #1a73e8; font-weight: 700; line-height: 1.2; }
+        .brand-text h1 { font-size: 20px; color: #1a73e8; font-weight: 700; line-height: 1.2; }
         .brand-text p { color: #5f6368; font-size: 13px; margin-top: 2px; }
 
         .header-actions {
@@ -43,17 +55,24 @@
             background-color: #10b981;
             color: #ffffff;
             border: none;
-            padding: 10px 18px;
+            padding: 8px 16px;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 14px;
+            font-size: 13px;
             transition: background 0.2s;
         }
         .print-btn:hover { background-color: #059669; }
+
+        /* Main Content Container */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            padding-bottom: 70px; /* Space for Fixed Footer */
+        }
 
         /* Filter Controls */
         .filter-panel { 
@@ -61,40 +80,41 @@
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
             gap: 12px; 
             background: #ffffff; 
-            padding: 20px; 
+            padding: 15px 20px; 
             border-radius: 12px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-            margin-bottom: 25px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            margin-bottom: 20px; 
             align-items: end;
         }
         .filter-group { display: flex; flex-direction: column; }
-        .filter-group label { font-size: 12px; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; color: #4b5563; }
+        .filter-group label { font-size: 11px; font-weight: 600; margin-bottom: 4px; text-transform: uppercase; color: #4b5563; }
         .filter-group input, .filter-group select { 
-            padding: 10px 12px; 
+            padding: 8px 10px; 
             border: 1px solid #d1d5db; 
-            border-radius: 8px; 
+            border-radius: 6px; 
             outline: none; 
-            font-size: 14px; 
+            font-size: 13px; 
             background-color: #f9fafb;
         }
         .filter-group input:focus, .filter-group select:focus { border-color: #1a73e8; background-color: #fff; }
         
         .reset-btn { 
-            padding: 10px 16px; 
+            padding: 8px 14px; 
             background: #ef4444; 
             color: #ffffff; 
             border: none; 
-            border-radius: 8px; 
+            border-radius: 6px; 
             cursor: pointer; 
             font-weight: 600; 
-            height: 41px;
+            height: 36px;
+            font-size: 13px;
         }
         .reset-btn:hover { background: #dc2626; }
 
         /* Product Cards Grid */
         .product-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
             gap: 20px; 
         }
         .product-card { 
@@ -110,7 +130,7 @@
         
         .img-box { 
             width: 100%; 
-            height: 200px; 
+            height: 180px; 
             background: #f3f4f6; 
             display: flex; 
             align-items: center; 
@@ -119,24 +139,24 @@
         }
         .img-box img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
         
-        .card-content { padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-content { padding: 14px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
         .category-badge { 
             display: inline-block; 
             background: #e0e7ff; 
             color: #3730a3; 
-            padding: 4px 8px; 
-            border-radius: 6px; 
-            font-size: 11px; 
+            padding: 3px 6px; 
+            border-radius: 4px; 
+            font-size: 10px; 
             font-weight: 700; 
-            margin-bottom: 8px; 
+            margin-bottom: 6px; 
             width: fit-content;
             text-transform: uppercase;
         }
-        .article-name { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 2px; }
-        .subcategory-name { font-size: 13px; color: #6b7280; font-weight: 500; margin-bottom: 12px; }
+        .article-name { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 2px; }
+        .subcategory-name { font-size: 12px; color: #6b7280; font-weight: 500; margin-bottom: 10px; }
         
-        .details-list { border-top: 1px dashed #e5e7eb; padding-top: 10px; margin-bottom: 12px; }
-        .details-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; color: #4b5563; }
+        .details-list { border-top: 1px dashed #e5e7eb; padding-top: 8px; margin-bottom: 10px; }
+        .details-item { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #4b5563; }
         .details-item span { font-weight: 600; color: #1f2937; text-align: right; max-width: 60%; }
         
         .price-box { 
@@ -144,46 +164,67 @@
             justify-content: space-between; 
             align-items: center; 
             background: #f9fafb; 
-            padding: 10px; 
-            border-radius: 8px; 
-            margin-bottom: 12px;
+            padding: 8px 10px; 
+            border-radius: 6px; 
+            margin-bottom: 10px;
         }
-        .mrp { font-size: 15px; font-weight: 800; color: #059669; }
+        .mrp { font-size: 14px; font-weight: 800; color: #059669; }
 
         .whatsapp-btn {
             background-color: #25d366;
             color: #ffffff;
             text-decoration: none;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 8px;
+            border-radius: 6px;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             transition: background 0.2s;
         }
         .whatsapp-btn:hover { background-color: #128c7e; }
 
-        #loading { text-align: center; font-size: 18px; color: #4b5563; padding: 40px; font-weight: 600; }
-        #no-results { display: none; grid-column: 1 / -1; text-align: center; color: #9ca3af; padding: 40px; font-size: 16px; }
+        /* Freeze Footer at Bottom */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #1e293b;
+            color: #f8fafc;
+            text-align: center;
+            padding: 10px 15px;
+            font-size: 12px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        footer a { color: #38bdf8; text-decoration: none; font-weight: 600; }
 
-        /* Print / PDF Mode Styling */
+        #loading { text-align: center; font-size: 16px; color: #4b5563; padding: 40px; font-weight: 600; }
+        #no-results { display: none; grid-column: 1 / -1; text-align: center; color: #9ca3af; padding: 40px; font-size: 15px; }
+
+        /* Print Mode Styling */
         @media print {
+            header, footer, .filter-panel, .header-actions, .whatsapp-btn { display: none !important; }
             body { background-color: #fff; padding: 0; }
-            .filter-panel, .header-actions, .whatsapp-btn, .reset-btn { display: none !important; }
-            header { box-shadow: none; border-bottom: 2px solid #ccc; border-radius: 0; }
-            .product-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .main-content { padding: 0; }
+            .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .product-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
         }
     </style>
 </head>
 <body>
 
+    <!-- Fixed Header -->
     <header>
         <div class="brand-container">
-            <!-- Converted Google Drive Direct Logo Link -->
             <img src="https://lh3.googleusercontent.com/d/1HcGfqjnUCih1k-H7hPiFqtR7kisDeQg7" alt="Action Logo" class="company-logo" id="companyLogo">
             <div class="brand-text">
                 <h1>Micro Industrial Corporation</h1>
@@ -192,51 +233,57 @@
         </div>
         <div class="header-actions">
             <button class="print-btn" onclick="window.print()">
-                📄 Download / Print PDF
+                📄 Print PDF
             </button>
         </div>
     </header>
 
-    <!-- Filter Buttons -->
-    <div class="filter-panel">
-        <div class="filter-group">
-            <label>Search Article No</label>
-            <input type="text" id="searchInput" placeholder="Search article no..." oninput="filterData()">
+    <!-- Scrollable Main Content -->
+    <div class="main-content">
+        <!-- Filter Controls -->
+        <div class="filter-panel">
+            <div class="filter-group">
+                <label>Search Article No</label>
+                <input type="text" id="searchInput" placeholder="Search article..." oninput="filterData()">
+            </div>
+            <div class="filter-group">
+                <label>Category</label>
+                <select id="catFilter" onchange="filterData()">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Sub Category</label>
+                <select id="subCatFilter" onchange="filterData()">
+                    <option value="">All Sub Categories</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Color</label>
+                <select id="colorFilter" onchange="filterData()">
+                    <option value="">All Colors</option>
+                </select>
+            </div>
+            <button class="reset-btn" onclick="resetAllFilters()">Reset</button>
         </div>
-        <div class="filter-group">
-            <label>Category</label>
-            <select id="catFilter" onchange="filterData()">
-                <option value="">All Categories</option>
-            </select>
+
+        <!-- Loading -->
+        <div id="loading">Loading Data from Google Sheet...</div>
+        
+        <!-- Grid -->
+        <div class="product-grid" id="productGrid">
+            <div id="no-results">No matching products found.</div>
         </div>
-        <div class="filter-group">
-            <label>Sub Category</label>
-            <select id="subCatFilter" onchange="filterData()">
-                <option value="">All Sub Categories</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label>Color</label>
-            <select id="colorFilter" onchange="filterData()">
-                <option value="">All Colors</option>
-            </select>
-        </div>
-        <button class="reset-btn" onclick="resetAllFilters()">Reset Filters</button>
     </div>
 
-    <!-- Loading -->
-    <div id="loading">Loading Data from Google Sheet...</div>
-    
-    <!-- Grid -->
-    <div class="product-grid" id="productGrid">
-        <div id="no-results">No matching products found.</div>
-    </div>
+    <!-- Fixed Footer -->
+    <footer>
+        <div>© Micro Industrial Corporation - All Rights Reserved</div>
+        <div>Contact: <a href="mailto:mis@actionlifestyle.com">mis@actionlifestyle.com</a> | WhatsApp: +91 95995 99519</div>
+    </footer>
 
     <script>
-        // Updated WhatsApp Receiver Number
         const WHATSAPP_NUMBER = "919599599519"; 
-
-        // Google Sheet CSV URL
         const SPREADSHEET_ID = '1EaKQStZdEwJ6IhGvU3qzCwWv5o-WP8MygpQk6sEblHA';
         const GID = '1143338782';
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
@@ -348,7 +395,7 @@
                             <div>
                                 <div class="price-box">
                                     <span class="mrp">Pairs: ${totalPairs}</span>
-                                    <span style="font-size: 13px; font-weight: 600; color: #4b5563;">CNS: ${totalCNS}</span>
+                                    <span style="font-size: 12px; font-weight: 600; color: #4b5563;">CNS: ${totalCNS}</span>
                                 </div>
                                 <a href="${waUrl}" target="_blank" class="whatsapp-btn">
                                     💬 Order on WhatsApp
