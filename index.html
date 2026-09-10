@@ -8,7 +8,8 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
         
-        /* Layout Fixes for Fixed Header and Footer */
+        html { scroll-behavior: smooth; }
+
         body { 
             background-color: #f0f2f5; 
             color: #1c1e21; 
@@ -29,7 +30,7 @@
             justify-content: space-between;
             background: #ffffff; 
             padding: 12px 25px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
             flex-wrap: wrap;
             gap: 15px;
         }
@@ -67,23 +68,26 @@
         }
         .print-btn:hover { background-color: #059669; }
 
-        /* Main Content Container */
+        /* Main Content Area */
         .main-content {
             flex: 1;
-            padding: 20px;
-            padding-bottom: 70px; /* Space for Fixed Footer */
+            padding: 0 20px 80px 20px; /* Space for Fixed Footer */
         }
 
-        /* Filter Controls */
+        /* Freeze Filter Controls Directly Below Header */
         .filter-panel { 
+            position: sticky;
+            top: 69px; /* Fits right under the header */
+            z-index: 999;
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
             gap: 12px; 
             background: #ffffff; 
             padding: 15px 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-            margin-bottom: 20px; 
+            border-bottom-left-radius: 12px; 
+            border-bottom-right-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08); 
+            margin-bottom: 25px; 
             align-items: end;
         }
         .filter-group { display: flex; flex-direction: column; }
@@ -186,6 +190,30 @@
         }
         .whatsapp-btn:hover { background-color: #128c7e; }
 
+        /* Floating Back to Top Button */
+        #scrollTopBtn {
+            display: none;
+            position: fixed;
+            bottom: 50px;
+            right: 25px;
+            z-index: 1001;
+            border: none;
+            outline: none;
+            background-color: #1a73e8;
+            color: white;
+            cursor: pointer;
+            padding: 12px 16px;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: opacity 0.3s, transform 0.2s;
+        }
+        #scrollTopBtn:hover {
+            background-color: #1557b0;
+            transform: scale(1.1);
+        }
+
         /* Freeze Footer at Bottom */
         footer {
             position: fixed;
@@ -212,7 +240,7 @@
 
         /* Print Mode Styling */
         @media print {
-            header, footer, .filter-panel, .header-actions, .whatsapp-btn { display: none !important; }
+            header, footer, .filter-panel, .header-actions, .whatsapp-btn, #scrollTopBtn { display: none !important; }
             body { background-color: #fff; padding: 0; }
             .main-content { padding: 0; }
             .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -240,7 +268,7 @@
 
     <!-- Scrollable Main Content -->
     <div class="main-content">
-        <!-- Filter Controls -->
+        <!-- Fixed Filter Controls Below Header -->
         <div class="filter-panel">
             <div class="filter-group">
                 <label>Search Article No</label>
@@ -276,6 +304,9 @@
         </div>
     </div>
 
+    <!-- Scroll To Top Button -->
+    <button id="scrollTopBtn" onclick="scrollToTop()" title="Go to top">⬆️</button>
+
     <!-- Fixed Footer -->
     <footer>
         <div>© Micro Industrial Corporation - All Rights Reserved</div>
@@ -289,6 +320,20 @@
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
         let rawProducts = [];
+
+        // Back To Top Scroll Logic
+        const scrollTopBtn = document.getElementById("scrollTopBtn");
+        window.onscroll = function() {
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                scrollTopBtn.style.display = "block";
+            } else {
+                scrollTopBtn.style.display = "none";
+            }
+        };
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         function fetchSheetData() {
             Papa.parse(CSV_URL, {
