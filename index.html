@@ -3,23 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Catalogue</title>
-    <!-- PapaParse for smooth CSV fetching -->
+    <title>Micro Industrial Corporation - Live Catalogue</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
         body { background-color: #f0f2f5; color: #1c1e21; padding: 20px; }
         
         header { 
-            text-align: center; 
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 25px; 
             background: #ffffff; 
-            padding: 20px; 
+            padding: 15px 30px; 
             border-radius: 12px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        header h1 { font-size: 26px; color: #1a73e8; font-weight: 700; }
-        header p { color: #5f6368; font-size: 14px; margin-top: 5px; }
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .company-logo {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+        .brand-text h1 { font-size: 22px; color: #1a73e8; font-weight: 700; line-height: 1.2; }
+        .brand-text p { color: #5f6368; font-size: 13px; margin-top: 2px; }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .print-btn {
+            background-color: #10b981;
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .print-btn:hover { background-color: #059669; }
 
         /* Filter Controls */
         .filter-panel { 
@@ -112,19 +146,55 @@
             background: #f9fafb; 
             padding: 10px; 
             border-radius: 8px; 
-            margin-top: auto; 
+            margin-bottom: 12px;
         }
         .mrp { font-size: 15px; font-weight: 800; color: #059669; }
 
+        .whatsapp-btn {
+            background-color: #25d366;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .whatsapp-btn:hover { background-color: #128c7e; }
+
         #loading { text-align: center; font-size: 18px; color: #4b5563; padding: 40px; font-weight: 600; }
         #no-results { display: none; grid-column: 1 / -1; text-align: center; color: #9ca3af; padding: 40px; font-size: 16px; }
+
+        /* Print / PDF Mode Styling */
+        @media print {
+            body { background-color: #fff; padding: 0; }
+            .filter-panel, .header-actions, .whatsapp-btn, .reset-btn { display: none !important; }
+            header { box-shadow: none; border-bottom: 2px solid #ccc; border-radius: 0; }
+            .product-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .product-card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Product Catalogue</h1>
-        <p>Live Product Inventory & Stock Directory</p>
+        <div class="brand-container">
+            <!-- Converted Google Drive Direct Logo Link -->
+            <img src="https://lh3.googleusercontent.com/d/1HcGfqjnUCih1k-H7hPiFqtR7kisDeQg7" alt="Action Logo" class="company-logo" id="companyLogo">
+            <div class="brand-text">
+                <h1>Micro Industrial Corporation</h1>
+                <p>Email: mis@actionlifestyle.com | Live Inventory Directory</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="print-btn" onclick="window.print()">
+                📄 Download / Print PDF
+            </button>
+        </div>
     </header>
 
     <!-- Filter Buttons -->
@@ -163,9 +233,12 @@
     </div>
 
     <script>
-        // Google Sheet URL targeting 'Article_Summary' tab (gid=1143338782)
+        // Updated WhatsApp Receiver Number
+        const WHATSAPP_NUMBER = "919599599519"; 
+
+        // Google Sheet CSV URL
         const SPREADSHEET_ID = '1EaKQStZdEwJ6IhGvU3qzCwWv5o-WP8MygpQk6sEblHA';
-        const GID = '1143338782'; // Article_Summary Tab ID
+        const GID = '1143338782';
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
         let rawProducts = [];
@@ -240,11 +313,21 @@
                 const totalPairs = p['Total Pairs'] || '0';
                 const totalCNS = p['Total CNS'] || '0';
                 
-                // Image column check
                 let img = p['Image'] || 'https://via.placeholder.com/300x200?text=No+Image';
                 if(img.trim().toLowerCase() === 'not found' || !img.startsWith('http')) {
                     img = 'https://via.placeholder.com/300x200?text=No+Image';
                 }
+
+                const waMessage = encodeURIComponent(
+                    `Hello Micro Industrial Corporation!\n` +
+                    `I want to inquire about this article:\n` +
+                    `• *Article No:* ${articleNo}\n` +
+                    `• *Category:* ${category} (${subCategory})\n` +
+                    `• *Color:* ${color}\n` +
+                    `• *Available Stock:* ${totalPairs} Pairs (${totalCNS} CNS)\n` +
+                    `Please share details.`
+                );
+                const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`;
 
                 const cardHTML = `
                     <div class="product-card">
@@ -262,9 +345,14 @@
                                     <div class="details-item">Size Info: <span>${size}</span></div>
                                 </div>
                             </div>
-                            <div class="price-box">
-                                <span class="mrp">Pairs: ${totalPairs}</span>
-                                <span style="font-size: 13px; font-weight: 600; color: #4b5563;">CNS: ${totalCNS}</span>
+                            <div>
+                                <div class="price-box">
+                                    <span class="mrp">Pairs: ${totalPairs}</span>
+                                    <span style="font-size: 13px; font-weight: 600; color: #4b5563;">CNS: ${totalCNS}</span>
+                                </div>
+                                <a href="${waUrl}" target="_blank" class="whatsapp-btn">
+                                    💬 Order on WhatsApp
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -299,7 +387,6 @@
             renderCards(rawProducts);
         }
 
-        // Start Loading Data
         fetchSheetData();
     </script>
 </body>
